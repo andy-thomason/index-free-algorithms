@@ -31,21 +31,20 @@ int main()
     auto start = std::chrono::high_resolution_clock::now();
 
     {
-      std::array<std::future<void>, 8> asyncs;
-      
+      std::array<std::thread, 8> asyncs;
       for (size_t core = 0; core != asyncs.size(); ++core) {
-        asyncs[core] = std::async(std::launch::async, [core, vsize, &v2, &v]{
+        asyncs[core] = std::thread([core, vsize, &v2, &v]{
           size_t imin = core*(vsize/8);
           size_t imax = std::min(vsize, imin+(vsize/8));
-          //printf("%x..%x\n", imin, imax);
           for (size_t i = imin; i != imax; ++i) {
             v2[v[i]] = i;
           }
         });
       }
       for (size_t core = 0; core != asyncs.size(); ++core) {
-        asyncs[core].wait();
+        asyncs[core].join();
       }
+      
     }
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << std::chrono::duration<double, std::nano>(end - start).count() / vsize << "\n";
@@ -53,7 +52,7 @@ int main()
 
   {
     auto start = std::chrono::high_resolution_clock::now();
-    size_t block_size = 0x100000;
+    size_t block_size = 0x10000;
     std::vector<size_t> dest(vsize/block_size+1);
     std::vector<size_t> tmp(block_size);
 
